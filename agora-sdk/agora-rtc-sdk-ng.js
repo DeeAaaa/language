@@ -1,4 +1,55 @@
-;(function(){var _sa=4294967294;var _origSAC;function _forceChina(){try{if(typeof AgoraRTC!=='undefined'&&AgoraRTC.setAreaCode){_origSAC=AgoraRTC.setAreaCode;AgoraRTC.setAreaCode=function(a){_sa=a||4294967294;console.log('[Agora] setAreaCode forced to CHINA:',_sa);return _origSAC.call(AgoraRTC,4294967294);};console.log('[Agora] setAreaCode wrapped for CHINA');}}catch(e){console.warn('[Agora] setAreaCode wrap failed:',e);}}_forceChina();if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',_forceChina);}setTimeout(_forceChina,1000);})();/**
+;(function(){
+  var _CHINA = 4294967294;
+  console.log('[Agora] CHINA wrapper loading...');
+  function _applyChina(obj) {
+    try {
+      if (obj && typeof obj === 'object') {
+        // Intercept setAreaCode — always return CHINA
+        if (typeof obj.setAreaCode === 'function') {
+          var _orig = obj.setAreaCode.bind(obj);
+          Object.defineProperty(obj, 'setAreaCode', {
+            value: function(a) {
+              console.log('[Agora] setAreaCode called, forcing CHINA:', a, '->', _CHINA);
+              return _orig(_CHINA);
+            },
+            writable: true, configurable: false
+          });
+          console.log('[Agora] setAreaCode intercepted with CHINA');
+        }
+        // Intercept createClient — force CHINA area before creating client
+        if (typeof obj.createClient === 'function') {
+          var _origCC = obj.createClient.bind(obj);
+          Object.defineProperty(obj, 'createClient', {
+            value: function(opts) {
+              console.log('[Agora] createClient called, forcing CHINA area');
+              try { obj.setAreaCode(_CHINA); } catch(e) {}
+              return _origCC(opts);
+            },
+            writable: true, configurable: false
+          });
+          console.log('[Agora] createClient intercepted with CHINA');
+        }
+      }
+    } catch(e) { console.warn('[Agora] CHINA intercept error:', e); }
+  }
+  // Apply immediately if AgoraRTC exists
+  _applyChina(window.AgoraRTC);
+  // Also apply when SDK finishes loading (deferred)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { _applyChina(window.AgoraRTC); });
+  }
+  // Retry periodically for a while
+  var _tries = 0;
+  var _interval = setInterval(function() {
+    _tries++;
+    _applyChina(window.AgoraRTC);
+    if (window.AgoraRTC && window.AgoraRTC.setAreaCode && window.AgoraRTC.createClient) {
+      console.log('[Agora] CHINA applied after', _tries, 'tries');
+      clearInterval(_interval);
+    }
+    if (_tries >= 20) clearInterval(_interval);
+  }, 100);
+})();/**
  * AgoraWebSDK_N-v4.24.5-0-g604b18ede-dirty Copyright AgoraInc.
  */
 
