@@ -4,7 +4,6 @@
   function _applyChina(obj) {
     try {
       if (obj && typeof obj === 'object') {
-        // Intercept setAreaCode — always return CHINA
         if (typeof obj.setAreaCode === 'function') {
           var _orig = obj.setAreaCode.bind(obj);
           Object.defineProperty(obj, 'setAreaCode', {
@@ -16,7 +15,6 @@
           });
           console.log('[Agora] setAreaCode intercepted with CHINA');
         }
-        // Intercept createClient — force CHINA area before creating client
         if (typeof obj.createClient === 'function') {
           var _origCC = obj.createClient.bind(obj);
           Object.defineProperty(obj, 'createClient', {
@@ -32,13 +30,10 @@
       }
     } catch(e) { console.warn('[Agora] CHINA intercept error:', e); }
   }
-  // Apply immediately if AgoraRTC exists
   _applyChina(window.AgoraRTC);
-  // Also apply when SDK finishes loading (deferred)
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() { _applyChina(window.AgoraRTC); });
   }
-  // Retry periodically for a while
   var _tries = 0;
   var _interval = setInterval(function() {
     _tries++;
